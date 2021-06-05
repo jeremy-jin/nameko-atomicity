@@ -21,11 +21,6 @@ setup(
             "black==21.5b2"
         ]
     },
-    entry_points={
-        'pytest11': [
-            'nameko_atomicity=nameko_atomicity.pytest_fixtures'
-        ]
-    },
     zip_safe=True,
     license='Apache License, Version 2.0',
     classifiers=[

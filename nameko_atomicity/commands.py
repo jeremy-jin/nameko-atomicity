@@ -1,7 +1,7 @@
 from collections import UserDict, namedtuple
 from typing import Union
 
-from exceptions import InvalidCommand
+from .exceptions import InvalidCommand
 
 Command = namedtuple("Command", "func, args, kwargs")
 """ Define a command class that must contain three parameters: func, args, kwargs """

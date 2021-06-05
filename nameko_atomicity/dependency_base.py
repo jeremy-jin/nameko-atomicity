@@ -1,6 +1,6 @@
 from typing import Union
 
-from commands import Command
+from .commands import Command
 
 
 class CommandsWrapper(object):

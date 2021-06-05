@@ -2,8 +2,8 @@ from functools import wraps
 
 from nameko.extensions import DependencyProvider
 
-from commands import CommandsBase
-from dependency_base import CommandsWrapper
+from .commands import CommandsBase
+from .dependency_base import CommandsWrapper
 
 
 class _DispatchCommands(CommandsBase):
