@@ -29,7 +29,7 @@ def dispatch_after_commit(func):
         >>> from nameko.rpc import rpc
         >>> from nameko.events import EventDispatcher
         >>> from nameko_atomicity import DispatchCommands
-
+        ...
         >>> class ConversionService(object):
         ...    name = "conversions"
         ...    event_dispatcher = EventDispatcher()

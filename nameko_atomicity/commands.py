@@ -108,4 +108,4 @@ class CommandsBase(DefaultListDict):
 
     def clear_commands(self, container) -> None:
         identify_id = identify(container)
-        self.pop(identify_id, [])
+        return self.pop(identify_id, [])
