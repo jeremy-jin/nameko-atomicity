@@ -40,7 +40,7 @@ def dispatch_after_commit(func):
         ...    def inches_to_cm(self, inches):
         ...        event_name = "booking_updated"
         ...        dispatch_data = {}
-        ...        self.dispatch_commands.add(
+        ...        self.dispatch_commands.append(
         ...            func=self.event_dispatcher,
         ...            args=(event_name, dispatch_data),
         ...            kwargs={},
