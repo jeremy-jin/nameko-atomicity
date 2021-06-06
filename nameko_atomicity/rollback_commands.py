@@ -53,6 +53,7 @@ def rollback_once_failed(func):
         try:
             response = func(self, *args, **kwargs)
         except Exception as exc:
+            # TODO(Jeremy): 解决参数名称动态问题
             self.rollback_commands.exec_commands()
             raise exc
 
