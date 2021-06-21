@@ -1,63 +1,76 @@
-from functools import wraps
+import inspect
 
+import wrapt
 from nameko.extensions import DependencyProvider
 
-from .commands import CommandsBase
-from .dependency_base import CommandsWrapper
+from .commands import CommandsWrapper
 
 
-class _DispatchCommands(CommandsBase):
+class _DispatchCommands(CommandsWrapper):
     pass
 
 
-class DispatchCommands(DependencyProvider):
+class DispatchCommandsDependencyProvider(DependencyProvider):
 
     """Dependency provider to access to the `::DispatchCommands::`.
 
     It will return a ``DispatchCommandsWrapper`` instance.
     """
 
+    @classmethod
+    def dispatch_after_commit(cls):
+        """Execute the dispatch event when the function call succeeds
+
+        The following example demonstrates the use of::
+
+            >>> from nameko.rpc import rpc
+            >>> from nameko.events import EventDispatcher
+            >>> from nameko_atomicity import DispatchCommands
+            ...
+            >>> class ConversionService(object):
+            ...    name = "conversions"
+            ...    dispatch_commands = DispatchCommands()
+            ...
+            ...    @rpc
+            ...    @dispatch_after_commit
+            ...    def inches_to_cm(self, inches):
+            ...        event_name = "booking_updated"
+            ...        dispatch_data = {}
+            ...        self.dispatch_commands.append(
+            ...            func=self.event_dispatcher,
+            ...            args=(event_name, dispatch_data),
+            ...            kwargs={},
+            ...        )
+
+        """
+
+        def find_commands_providers(instance):
+            commands_provides = inspect.getmembers(
+                instance, lambda obj: isinstance(obj, _DispatchCommands)
+            )
+            return commands_provides
+
+        @wrapt.decorator
+        def wrapper(wrapped, instance, args, kwargs):
+            commands_provides = find_commands_providers(instance)
+            try:
+
+                response = wrapped(instance, *args, **kwargs)
+                for commands_provide in commands_provides:
+                    commands_provide.exec_commands()
+                return response
+            except Exception as exc:
+                raise exc
+
+            finally:
+                for commands_provide in commands_provides:
+                    commands_provide.clear_commands()
+
+        return wrapper
+
     def get_dependency(self, worker_ctx):
-        return CommandsWrapper(worker_ctx, _DispatchCommands)
+        return _DispatchCommands(worker_ctx)
 
 
-def dispatch_after_commit(func):
-    """Execute the dispatch event when the function call succeeds
-
-    The following example demonstrates the use of::
-
-        >>> from nameko.rpc import rpc
-        >>> from nameko.events import EventDispatcher
-        >>> from nameko_atomicity import DispatchCommands
-        ...
-        >>> class ConversionService(object):
-        ...    name = "conversions"
-        ...    event_dispatcher = EventDispatcher()
-        ...    dispatch_commands = DispatchCommands()
-        ...
-        ...    @rpc
-        ...    @dispatch_after_commit
-        ...    def inches_to_cm(self, inches):
-        ...        event_name = "booking_updated"
-        ...        dispatch_data = {}
-        ...        self.dispatch_commands.append(
-        ...            func=self.event_dispatcher,
-        ...            args=(event_name, dispatch_data),
-        ...            kwargs={},
-        ...        )
-
-    """
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        try:
-            response = func(self, *args, **kwargs)
-            self.dispatch_commands.exec_commands()
-            return response
-        except Exception as exc:
-            raise exc
-
-        finally:
-            self.dispatch_commands.clear_commands()
-
-    return wrapper
+DispatchCommands = DispatchCommandsDependencyProvider
+dispatch_after_commit = DispatchCommandsDependencyProvider.dispatch_after_commit()

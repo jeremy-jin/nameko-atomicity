@@ -1,65 +1,79 @@
-from functools import wraps
+import inspect
 
+import wrapt
 from nameko.extensions import DependencyProvider
 
-from .commands import CommandsBase
-from .dependency_base import CommandsWrapper
+from .commands import CommandsWrapper
 
 
-class _RollbackCommands(CommandsBase):
+class _RollbackCommands(CommandsWrapper):
     pass
 
 
-class RollbackCommands(DependencyProvider):
+class RollbackCommandsDependencyProvider(DependencyProvider):
 
     """Dependency provider to access to the `::RollbackCommands::`.
 
     It will return a ``RollbackCommandsWrapper`` instance.
     """
 
+    @classmethod
+    def rollback_once_failed(cls):
+        """Execute the rollback command when a function call fails
+
+        The following example demonstrates the use of::
+
+            >>> from nameko.rpc import rpc
+            ... from nameko_atomicity import RollbackCommands
+            ...
+            ... def rollback_function():
+            ...     pass
+            ...
+            ... class ConversionService(object):
+            ...    name = "conversions"
+            ...
+            ...    rollback_commands = RollbackCommands()
+            ...
+            ...    @rpc
+            ...    @rollback_once_failed
+            ...    def inches_to_cm(self, inches):
+            ...        self.rollback_commands.append(
+            ...            func=rollback_function,
+            ...            args=(),
+            ...            kwargs={},
+            ...        )
+
+        """
+
+        def find_commands_providers(instance):
+            commands_provides = inspect.getmembers(
+                instance, lambda obj: isinstance(obj, _RollbackCommands)
+            )
+            return commands_provides
+
+        @wrapt.decorator
+        def wrapper(wrapped, instance, args, kwargs):
+            commands_provides = find_commands_providers(instance)
+
+            try:
+                response = wrapped(instance, *args, **kwargs)
+            except Exception as exc:
+                for commands_provide in commands_provides:
+                    commands_provide.exec_commands()
+
+                raise exc
+
+            finally:
+                for commands_provide in commands_provides:
+                    commands_provide.clear_commands()
+
+            return response
+
+        return wrapper
+
     def get_dependency(self, worker_ctx):
-        return CommandsWrapper(worker_ctx, _RollbackCommands)
+        return _RollbackCommands(worker_ctx)
 
 
-def rollback_once_failed(func):
-    """Execute the rollback command when a function call fails
-
-    The following example demonstrates the use of::
-
-        >>> from nameko.rpc import rpc
-        ... from nameko_atomicity import RollbackCommands
-        ...
-        ... def rollback_function():
-        ...     pass
-        ...
-        ... class ConversionService(object):
-        ...    name = "conversions"
-        ...
-        ...    rollback_commands = RollbackCommands()
-        ...
-        ...    @rpc
-        ...    @rollback_once_failed
-        ...    def inches_to_cm(self, inches):
-        ...        self.rollback_commands.append(
-        ...            func=rollback_function,
-        ...            args=(),
-        ...            kwargs={},
-        ...        )
-
-    """
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        try:
-            response = func(self, *args, **kwargs)
-        except Exception as exc:
-            # TODO(Jeremy): 解决参数名称动态问题
-            self.rollback_commands.exec_commands()
-            raise exc
-
-        finally:
-            self.rollback_commands.clear_commands()
-
-        return response
-
-    return wrapper
+RollbackCommands = RollbackCommandsDependencyProvider
+rollback_once_failed = RollbackCommandsDependencyProvider.rollback_once_failed()

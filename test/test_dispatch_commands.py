@@ -1,17 +1,19 @@
 import pytest
 
+from nameko_atomicity.dispatch_commands import _DispatchCommands
 from nameko_atomicity import dispatch_after_commit
-from nameko_atomicity.dependency_base import CommandsWrapper
 
 
 class TestDispatchCommands:
     def test_get_dependency(self, dispatch_commands, worker_ctx):
         dependency = dispatch_commands.get_dependency(worker_ctx)
-        assert isinstance(dependency, CommandsWrapper)
+        assert isinstance(dependency, _DispatchCommands)
 
 
 class TestDispatchAfterCommit:
     def test_successful(self, worker_ctx, dispatch_commands, func):
+
+        @dispatch_after_commit
         def dispatch(*args, **kwargs):
             pass
 

@@ -1,7 +1,21 @@
 import pytest
 
 from nameko_atomicity.exceptions import InvalidCommand
-from nameko_atomicity.commands import DefaultListDict, CommandsBase, Command, identify
+from nameko_atomicity.commands import (
+    DefaultListDict, CommandsWrapper, Command, Commands, identify
+)
+
+
+class Container(object):
+    pass
+
+
+class WorkerCtx:
+    container = Container()
+
+
+def func(*args, **kwargs):
+    pass
 
 
 class TestDefaultListDict:
@@ -24,7 +38,7 @@ class TestDefaultListDict:
         assert default_dict.case_insert == ["done1", "done"]
 
 
-class TestCommandsBase:
+class TestCommands:
     def func(*args, **kwargs):
         pass
 
@@ -34,7 +48,7 @@ class TestCommandsBase:
     class Container(object):
         pass
 
-    commands = CommandsBase()
+    commands = Commands()
     container = Container()
 
     def test_append_command(self):
@@ -100,3 +114,42 @@ class TestCommandsBase:
         identify_id = identify(self.container)
         commands = self.commands.pop(identify_id)
         assert commands == []
+
+
+class TestCommandsWrapper:
+    worker_ctx = WorkerCtx()
+    command_wrapper = CommandsWrapper(worker_ctx)
+    command = Command(func=func, args=(), kwargs={})
+
+    def test_add_command(self):
+        self.command_wrapper.append_command(self.command)
+        commands = self.command_wrapper.clear_commands()
+        assert commands
+        assert len(commands) == 1
+
+    def test_insert_command(self):
+        self.command_wrapper.insert_command(self.command, 0)
+        command1 = Command(func=func, args=(), kwargs={})
+        self.command_wrapper.insert_command(command1, 0)
+        commands = self.command_wrapper.clear_commands()
+        assert commands
+        assert len(commands) == 2
+        assert commands[0] == command1
+
+    def test_append(self):
+        self.command_wrapper.append(func)
+        commands = self.command_wrapper.clear_commands()
+        assert commands
+        assert len(commands) == 1
+
+    def test_insert(self):
+        self.command_wrapper.insert(0, func)
+        commands = self.command_wrapper.clear_commands()
+        assert commands
+        assert len(commands) == 1
+
+    def test_exec_commands(self):
+        self.command_wrapper.insert(0, func)
+        commands = self.command_wrapper.exec_commands()
+        assert commands
+        assert len(commands) == 1
