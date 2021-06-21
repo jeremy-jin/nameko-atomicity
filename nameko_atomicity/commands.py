@@ -113,19 +113,19 @@ class Commands(DefaultListDict):
 
 class CommandsWrapper(object):
     def __init__(self, worker_ctx, commands_cls=Commands):
-        self.worker_ctx, self.container = worker_ctx, worker_ctx.container
+        self.worker_ctx, self.service = worker_ctx, worker_ctx.service
         self._commands = commands_cls()
 
     def append_command(self, command: Command):
-        self._commands.append_command(self.container, command)
+        self._commands.append_command(self.service, command)
 
     def insert_command(self, command: Command, index: int):
-        self._commands.insert_command(self.container, command, index)
+        self._commands.insert_command(self.service, command, index)
 
     def append(
         self, func, args: Union[tuple, list] = None, kwargs: dict = None
     ) -> None:
-        self._commands.append(self.container, func, args, kwargs)
+        self._commands.append(self.service, func, args, kwargs)
 
     def insert(
         self,
@@ -134,13 +134,13 @@ class CommandsWrapper(object):
         args: Union[tuple, list] = None,
         kwargs: dict = None,
     ) -> None:
-        self._commands.insert(self.container, index, func, args, kwargs)
+        self._commands.insert(self.service, index, func, args, kwargs)
 
     def exec_commands(self) -> list:
-        return self._commands.exec_commands(self.container)
+        return self._commands.exec_commands(self.service)
 
     def clear_commands(self):
-        return self._commands.clear_commands(self.container)
+        return self._commands.clear_commands(self.service)
 
 
 class CommandsProxy(object):
