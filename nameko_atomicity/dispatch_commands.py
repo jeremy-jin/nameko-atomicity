@@ -3,7 +3,7 @@ import inspect
 import wrapt
 from nameko.extensions import DependencyProvider
 
-from .commands import CommandsWrapper
+from .commands import CommandsWrapper, CommandsProxy
 
 
 class _DispatchCommands(CommandsWrapper):
@@ -18,7 +18,7 @@ class DispatchCommandsDependencyProvider(DependencyProvider):
     """
 
     @classmethod
-    def dispatch_after_commit(cls):
+    def dispatch_after_commit(cls, wrapped=None):
         """Execute the dispatch event when the function call succeeds
 
         The following example demonstrates the use of::
@@ -56,15 +56,16 @@ class DispatchCommandsDependencyProvider(DependencyProvider):
             try:
 
                 response = wrapped(instance, *args, **kwargs)
-                for commands_provide in commands_provides:
-                    commands_provide.exec_commands()
+                CommandsProxy(commands_provides).exec_commands()
                 return response
             except Exception as exc:
                 raise exc
 
             finally:
-                for commands_provide in commands_provides:
-                    commands_provide.clear_commands()
+                CommandsProxy(commands_provides).clear_commands()
+
+        if wrapped:
+            return wrapper(wrapped)
 
         return wrapper
 
@@ -73,4 +74,4 @@ class DispatchCommandsDependencyProvider(DependencyProvider):
 
 
 DispatchCommands = DispatchCommandsDependencyProvider
-dispatch_after_commit = DispatchCommandsDependencyProvider.dispatch_after_commit()
+dispatch_after_commit = DispatchCommandsDependencyProvider.dispatch_after_commit

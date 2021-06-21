@@ -141,3 +141,20 @@ class CommandsWrapper(object):
 
     def clear_commands(self):
         return self._commands.clear_commands(self.container)
+
+
+class CommandsProxy(object):
+    def __init__(self, items):
+        self._items = items
+
+    def __getattr__(self, name):
+        def spawning_method(*args, **kwargs):
+            items = self._items
+
+            def call(item):
+                return getattr(item, name)(*args, **kwargs)
+
+            if items:
+                return list(map(call, self._items))
+
+        return spawning_method

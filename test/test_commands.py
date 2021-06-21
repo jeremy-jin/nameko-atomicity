@@ -2,7 +2,11 @@ import pytest
 
 from nameko_atomicity.exceptions import InvalidCommand
 from nameko_atomicity.commands import (
-    DefaultListDict, CommandsWrapper, Command, Commands, identify
+    DefaultListDict,
+    CommandsWrapper,
+    Command,
+    Commands,
+    identify,
 )
 
 

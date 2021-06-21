@@ -3,7 +3,7 @@ import inspect
 import wrapt
 from nameko.extensions import DependencyProvider
 
-from .commands import CommandsWrapper
+from .commands import CommandsWrapper, CommandsProxy
 
 
 class _RollbackCommands(CommandsWrapper):
@@ -18,7 +18,7 @@ class RollbackCommandsDependencyProvider(DependencyProvider):
     """
 
     @classmethod
-    def rollback_once_failed(cls):
+    def rollback_once_failed(cls, wrapped=None):
         """Execute the rollback command when a function call fails
 
         The following example demonstrates the use of::
@@ -58,16 +58,17 @@ class RollbackCommandsDependencyProvider(DependencyProvider):
             try:
                 response = wrapped(instance, *args, **kwargs)
             except Exception as exc:
-                for commands_provide in commands_provides:
-                    commands_provide.exec_commands()
+                CommandsProxy(commands_provides).exec_commands()
 
                 raise exc
 
             finally:
-                for commands_provide in commands_provides:
-                    commands_provide.clear_commands()
+                CommandsProxy(commands_provides).clear_commands()
 
             return response
+
+        if wrapped:
+            return wrapper(wrapped)
 
         return wrapper
 
@@ -76,4 +77,4 @@ class RollbackCommandsDependencyProvider(DependencyProvider):
 
 
 RollbackCommands = RollbackCommandsDependencyProvider
-rollback_once_failed = RollbackCommandsDependencyProvider.rollback_once_failed()
+rollback_once_failed = RollbackCommandsDependencyProvider.rollback_once_failed
