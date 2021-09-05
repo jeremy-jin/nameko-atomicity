@@ -18,7 +18,7 @@ class DispatchCommandsDependencyProvider(DependencyProvider):
     """
 
     @classmethod
-    def dispatch_after_commit(cls, wrapped=None):
+    def dispatch_after_commit(cls, wrapped=None, *args, **kwargs):
         """Execute the dispatch event when the function call succeeds
 
         The following example demonstrates the use of::
@@ -53,13 +53,13 @@ class DispatchCommandsDependencyProvider(DependencyProvider):
         @wrapt.decorator
         def wrapper(wrapped, instance, args, kwargs):
             commands_provides = find_commands_providers(instance)
+            commands_provides = [
+                commands_provide[1] for commands_provide in commands_provides
+            ]
             try:
-
-                response = wrapped(instance, *args, **kwargs)
+                response = wrapped(*args, **kwargs)
                 CommandsProxy(commands_provides).exec_commands()
                 return response
-            except Exception as exc:
-                raise exc
 
             finally:
                 CommandsProxy(commands_provides).clear_commands()

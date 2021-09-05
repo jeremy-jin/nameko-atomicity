@@ -54,9 +54,12 @@ class RollbackCommandsDependencyProvider(DependencyProvider):
         @wrapt.decorator
         def wrapper(wrapped, instance, args, kwargs):
             commands_provides = find_commands_providers(instance)
+            commands_provides = [
+                commands_provide[1] for commands_provide in commands_provides
+            ]
 
             try:
-                response = wrapped(instance, *args, **kwargs)
+                response = wrapped(*args, **kwargs)
             except Exception as exc:
                 CommandsProxy(commands_provides).exec_commands()
 
