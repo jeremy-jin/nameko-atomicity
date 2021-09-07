@@ -50,7 +50,7 @@ or restore the data before the change data).
 
 ```
 
-- Solving Problem 1), for example:
+- Solving Problem 2), for example:
 
 ```
 >>> from nameko.rpc import rpc
