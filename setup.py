@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='nameko-atomicity',
@@ -8,7 +8,7 @@ setup(
     author='jeremy-jin',
     author_email='306795597@qq.com',
     url='https://github.com/jeremy-jin/nameko-atomicity',
-    packages=['nameko_atomicity'],
+    packages=find_packages(exclude=("test",)),
     install_requires=[
         "nameko>=2.0.0",
     ],
