@@ -24,6 +24,12 @@ so you need to roll back the data saved in RPC A (or delete
 or restore the data before the change data).
 
 
+# Instatll
+```
+>>> pip install nameko-atomicty
+```
+
+
 # Usage
 
 - Solving Problem 1), for example:
