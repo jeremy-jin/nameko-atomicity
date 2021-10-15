@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nameko-atomicity',
-    version='0.0.1',
+    version='0.0.2',
     description='Atomicity dependency for nameko services',
     author='jeremy-jin',
     author_email='306795597@qq.com',
