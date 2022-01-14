@@ -61,7 +61,13 @@ class RollbackCommandsDependencyProvider(DependencyProvider):
             try:
                 response = wrapped(*args, **kwargs)
             except Exception as exc:
+                # 回滚之前所有操作
+                instance.storage.session.rollback()
+
                 CommandsProxy(commands_provides).exec_commands()
+
+                # 提交回滚过程中的操作
+                instance.storage.session.commit()
 
                 raise exc
 
